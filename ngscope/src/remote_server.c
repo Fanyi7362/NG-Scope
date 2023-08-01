@@ -54,17 +54,21 @@ int main(int argc, char** argv){
 	ue_dci.cell_idx = 0;
 	ue_dci.tti  	= 111;
 	ue_dci.rnti  	= 1111;
+	ue_dci.dl_ul_flag = 1;
 
-	ue_dci.dl_tbs 	= 1111;
-	ue_dci.dl_reTx 	= 1;
-	ue_dci.dl_rv_flag 	= false;
+	ue_dci.cell_prb     = 100;
+	ue_dci.prb 		    = 100;
+
+	ue_dci.mcs0 		= 0;
+	ue_dci.mcs1 		= 1;
+	ue_dci.tbs0 		= 100;
+	ue_dci.tbs1 		= 200;
+	ue_dci.rv0 			= 0;
+	ue_dci.rv1 			= 1;
 	
-	ue_dci.ul_tbs 	= 2222;
-	ue_dci.ul_reTx 	= 0;
-	ue_dci.ul_rv_flag 	= false;
 
 	while(!go_exit){
-		sock_send_single_dci(&dci_sink_serv, &ue_dci, 0);	
+		sock_send_single_dci(&dci_sink_serv, &ue_dci, 0);
 		usleep(1000);
 	}
 

@@ -24,7 +24,7 @@ extern "C" {
 /* status of one subframe
  * Each sbframe includes multiple control messages */
 typedef struct{
-	uint16_t 	tti;
+	uint16_t 	tti; // frame index*10+subframe index
 
 	bool 		filled;
     uint8_t     cell_dl_prb; // total cell downlink prb

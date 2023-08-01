@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "dci_sink_client_beamforming.h": "c",
+        "string.h": "c",
+        "dci_sink_dci_recv.h": "c",
+        "dci_sink_ring_buffer.h": "c",
+        "termios.h": "c",
+        "load_config_remote.h": "c",
+        "random": "c",
+        "dci_sink_client.h": "c",
+        "dci_sink_sock.h": "c"
+    }
+}

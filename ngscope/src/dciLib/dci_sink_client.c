@@ -17,6 +17,7 @@
 
 //#include "srsran/srsran.h"
 #include "ngscope/hdr/dciLib/dci_sink_client.h"
+#include "ngscope/hdr/dciLib/dci_sink_client_beamforming.h"
 #include "ngscope/hdr/dciLib/dci_sink_sock.h"
 #include "ngscope/hdr/dciLib/dci_sink_dci_recv.h"
 #include "ngscope/hdr/dciLib/dci_sink_ring_buffer.h"
@@ -112,13 +113,14 @@ void* dci_sink_client_thread(void* p){
 	    int buf_idx = 0;
         int recvLen = 0;
 
+		// receive data from server
         recvLen = recvfrom(sockfd, (char *)recvBuf, 1400, MSG_WAITALL, (struct sockaddr*) &cliaddr, &len);
         if(recvLen > 0){
             while(!go_exit){
 				int ret = ngscope_dci_sink_recv_buffer(&dci_CA_buf, recvBuf, buf_idx, recvLen);
                 if(ret < 0){
                     // ignore the buffer
-                    printf("recvLen: %d buf_idx: %d \n\n", recvLen, buf_idx);
+                    printf("DCI recv failed, recvLen: %d buf_idx: %d \n\n", recvLen, buf_idx);
                     buf_idx = recvLen;
                     break;
                 }else if(ret == recvLen){

@@ -25,11 +25,14 @@ void ngscope_dci_sink_cell_init(ngscope_dci_sink_cell_t* q){
 	q->header 	= 0;
 	q->cell_prb = 50; //default 10MHz
 	q->nof_logged_dci 		= 0;
-	q->recent_dl_reTx_t_us 	= 0;
-	q->recent_ul_reTx_t_us 	= 0;
-	q->recent_dl_reTx_tti 	= 0;
-	q->recent_ul_reTx_tti 	= 0;
+	q->nof_unused_dci 		= 0;
+	q->nof_logged_tti 		= 0;
+	q->recent_reTx_t_us 	= 0;
+	q->recent_reTx_tti 		= 0;
 	
+	// initialize mutex
+	pthread_mutex_init(&q->mutex, NULL);
+
 	for(int i=0; i<NOF_LOG_DCI; i++){
 		memset(&q->dci[i], 0, sizeof(ue_dci_t));
 	}
@@ -52,7 +55,7 @@ void ca_update_header(ngscope_dci_sink_CA_t* q){
 	uint64_t curr_time[MAX_NOF_CELL];
 	bool 	ca_ready = true;
 
-	// NOTE::: here the header is the tii, no the index inside the array
+	// NOTE::: here the header is the tii, not the index inside the array
 	for(int i=0; i<nof_cell; i++){
 		int cell_header = (q->cell_dci[i].header - 1) % NOF_LOG_DCI;
 		header_vec[i] 	= q->cell_dci[i].dci[cell_header].tti;
@@ -87,6 +90,12 @@ void ca_update_header(ngscope_dci_sink_CA_t* q){
 	return;
 }
 
+void print_non_empty_ue_dci(ue_dci_t* q){
+	printf("Cell_idx:%d tti:%d rnti:%d tbs:%d n_prb:%d\n", 
+			q->cell_idx, q->tti, q->rnti, q->tbs0+q->tbs1, q->prb);
+	return;
+}
+
 void insert_single_dci(ngscope_dci_sink_CA_t* q, ue_dci_t* ue_dci){
 	// get the pointer to the dci cell 
 	uint8_t cell_idx = ue_dci->cell_idx;
@@ -97,14 +106,18 @@ void insert_single_dci(ngscope_dci_sink_CA_t* q, ue_dci_t* ue_dci){
 	int prev_tti 	= dci_cell->dci[prev_header].tti; 
 	int curr_tti 	= ue_dci->tti;
 
-	//printf("prev:%d curr:%d header:%d prev_header:%d\n", prev_tti, curr_tti, dci_cell->header, prev_header);
-	if( ((prev_tti + 1) % 10240) != curr_tti){
-		printf("We missing one DCI message! prev:%d curr:%d ", prev_tti, curr_tti);
-		printf("header:%d prev_header:%d\n",  dci_cell->header, prev_header);
+	// printf("prev:%d curr:%d header:%d prev_header:%d\n", prev_tti, curr_tti, dci_cell->header, prev_header);
+	// if( ((prev_tti + 1) % 10240) < curr_tti && curr_tti != 10239){
+	// 	printf("We missing one DCI message! prev:%d curr:%d ", prev_tti, curr_tti);
+	// 	printf("header:%d prev_header:%d\n",  dci_cell->header, prev_header);
+	// }
+
+	if(prev_tti < curr_tti){
+		dci_cell->nof_logged_tti++;
 	}
 
 	// print the received ue_dci
-	//print_non_empty_ue_dci(ue_dci, cell_idx);
+	// print_non_empty_ue_dci(ue_dci);
 
 	// print cell related information
 	//if(cell_idx == 0){
@@ -123,16 +136,20 @@ void insert_single_dci(ngscope_dci_sink_CA_t* q, ue_dci_t* ue_dci){
 	if(dci_cell->nof_logged_dci < NOF_LOG_DCI){
 		dci_cell->nof_logged_dci++;
 	}
+	// update unused dci length
+	if(dci_cell->nof_unused_dci < NOF_LOG_DCI){
+		dci_cell->nof_unused_dci++;
+	}
 	// check if current dci indicates retransmission
-	if(ue_dci->dl_reTx == 1){
-		dci_cell->recent_dl_reTx_t_us = ue_dci->time_stamp;
-		dci_cell->recent_dl_reTx_tti  = ue_dci->tti;
+	if(ue_dci->rv0>0 ||  ue_dci->rv1>0){
+		dci_cell->recent_reTx_t_us = ue_dci->time_stamp;
+		dci_cell->recent_reTx_tti  = ue_dci->tti;
 	}
 
-	if(ue_dci->ul_reTx == 1){
-		dci_cell->recent_ul_reTx_t_us = ue_dci->time_stamp;
-		dci_cell->recent_ul_reTx_tti  = ue_dci->tti;
-	}
+	// if(ue_dci->ul_reTx == 1){
+	// 	dci_cell->recent_ul_reTx_t_us = ue_dci->time_stamp;
+	// 	dci_cell->recent_ul_reTx_tti  = ue_dci->tti;
+	// }
 
 	ca_update_header(q);
 

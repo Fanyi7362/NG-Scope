@@ -145,43 +145,52 @@ int push_dci_to_remote(sf_status_t* q, int cell_idx, uint16_t targetRNTI, int re
 		//printf("ERROR: sock not set!\n\n");
 		return -1;
 	}
-	ue_dci_t ue_dci;	
-	ue_dci.cell_idx  = cell_idx;
-	ue_dci.time_stamp 	= q->timestamp_us;
+	ue_dci_t ue_dci;
+
+	ue_dci.cell_idx   = cell_idx;
+	ue_dci.time_stamp = q->timestamp_us;
 	ue_dci.tti 		= 	q->tti;
-	ue_dci.rnti 	= targetRNTI;
-
-	ue_dci.dl_rv_flag 	= false;
-	ue_dci.ul_rv_flag 	= false;
-
-	int 	nof_dl_msg  = q->nof_dl_msg;
-	int 	nof_ul_msg  = q->nof_ul_msg;
+	
+	int nof_dl_msg  = q->nof_dl_msg;
+	int nof_ul_msg  = q->nof_ul_msg;
 
 	for(int i=0; i<nof_dl_msg;i++){
-		if(q->dl_msg[i].rnti == targetRNTI){
-			ngscope_dci_msg_t dci_msg = q->dl_msg[i];
-			ue_dci.dl_tbs 	= dci_msg.tb[0].tbs + dci_msg.tb[1].tbs;
-			if(dci_msg.tb[0].rv > 0 || dci_msg.tb[1].rv > 0){
-				ue_dci.dl_reTx = 1;
-			}else{
-				ue_dci.dl_reTx = 0;
-			}
-		}
+		ue_dci.dl_ul_flag = 0;
+		ue_dci.cell_prb = q->cell_dl_prb;
+
+		ngscope_dci_msg_t dci_msg = q->dl_msg[i];
+		ue_dci.rnti = dci_msg.rnti;
+		ue_dci.prb  = dci_msg.prb;
+
+		ue_dci.mcs0 = dci_msg.tb[0].mcs;
+		ue_dci.mcs1 = dci_msg.tb[1].mcs;
+		ue_dci.tbs0 = dci_msg.tb[0].tbs;
+		ue_dci.tbs1 = dci_msg.tb[1].tbs;
+		ue_dci.rv0 	= dci_msg.tb[0].rv;
+		ue_dci.rv1 	= dci_msg.tb[1].rv;
+		
+		sock_send_single_dci(&dci_sink_serv, &ue_dci, 0);
 	}
 
 	for(int i=0; i<nof_ul_msg;i++){
-		if(q->ul_msg[i].rnti == targetRNTI){
-			ngscope_dci_msg_t dci_msg = q->ul_msg[i];
-			ue_dci.ul_tbs 	= dci_msg.tb[0].tbs + dci_msg.tb[1].tbs;
-			if(dci_msg.tb[0].rv > 0 || dci_msg.tb[1].rv > 0){
-				ue_dci.ul_reTx = 1;
-			}else{
-				ue_dci.ul_reTx = 0;
-			}
-		}
+		ue_dci.dl_ul_flag = 1;
+		ue_dci.cell_prb = q->cell_ul_prb;
+
+		ngscope_dci_msg_t dci_msg = q->ul_msg[i];
+		ue_dci.rnti = dci_msg.rnti;
+		ue_dci.prb  = dci_msg.prb;
+
+		ue_dci.mcs0 = dci_msg.tb[0].mcs;
+		ue_dci.mcs1 = dci_msg.tb[1].mcs;
+		ue_dci.tbs0 = dci_msg.tb[0].tbs;
+		ue_dci.tbs1 = dci_msg.tb[1].tbs;
+		ue_dci.rv0 	= dci_msg.tb[0].rv;
+		ue_dci.rv1 	= dci_msg.tb[1].rv;
+
+		sock_send_single_dci(&dci_sink_serv, &ue_dci, 0);
 	}
 
-	sock_send_single_dci(&dci_sink_serv, &ue_dci, 0);
+	
 
 	return 1;
 }
@@ -256,6 +265,7 @@ void update_cell_status_header(ngscope_cell_dci_ring_buffer_t* q, int remote_soc
 	while(q->sub_stat[index].filled){
 		q->cell_header 				= index;
 		q->sub_stat[index].filled 	= false;
+		// push_dci_to_remote per subframe
 		push_dci_to_remote(&q->sub_stat[index], q->cell_idx, q->targetRNTI, remote_sock);
 		//fprintf(fd,"%d\t%d\t%d\t%d\t\n", q->sub_stat[index].tti, q->cell_header, index, tti);
 		//printf("push tti:%d index:%d\n", q->sub_stat[index].tti, index);

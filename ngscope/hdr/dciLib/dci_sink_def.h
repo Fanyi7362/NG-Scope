@@ -28,21 +28,21 @@
 // Such as the MCS index. TO do that, we also need to change the DCI sending funcations
 typedef struct{
 	uint8_t  cell_idx;
-
     uint64_t time_stamp;
-    uint16_t tti;
+    uint16_t tti; // frame index *10 + subframe index
+	uint8_t dl_ul_flag; // 0: downlink, 1: uplink
 
-	uint16_t rnti; 
+	uint16_t rnti; // UE rnti
+	uint8_t cell_prb; // cell total prb in use
+	uint8_t prb; // number of prb used by the UE rnti
 
-	// downlink information NOTE: some information are not included (e.g. MCS)
-	uint32_t dl_tbs;
-    uint8_t  dl_reTx;
-	bool 	 dl_rv_flag;
+	uint8_t mcs0; // stream 0
+    uint32_t tbs0;
+    uint8_t rv0;
 
-	// uplink information
-    uint32_t ul_tbs;
-    uint8_t  ul_reTx;
-	bool 	 ul_rv_flag;
+	uint8_t mcs1; // stream 1
+	uint32_t tbs1;
+	uint8_t rv1;
 }ue_dci_t;
 
 

@@ -23,17 +23,17 @@
 // the ring buffer that stores the dci of a single cell
 typedef struct{
 	int 		cell_prb;
-	int 		header;
+	int 		header; // the index of the current header in ring buffer [NOF_LOG_DCI]
 	int 		nof_logged_dci;
+	int 		nof_unused_dci;
+	int 		nof_logged_tti; // the number of subframes that have been logged
 
-	uint64_t	recent_dl_reTx_t_us;	
-	uint64_t	recent_ul_reTx_t_us;	
-
-	uint16_t 	recent_dl_reTx_tti;
-	uint16_t 	recent_ul_reTx_tti;
+	uint64_t	recent_reTx_t_us;	
+	uint16_t 	recent_reTx_tti;
 
 	// the dci 
 	ue_dci_t 	dci[NOF_LOG_DCI];	
+	pthread_mutex_t mutex; 
 }ngscope_dci_sink_cell_t;
 
 /* The combination of multiple ring buffers that

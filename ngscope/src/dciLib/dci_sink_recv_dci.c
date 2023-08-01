@@ -40,14 +40,16 @@ int recv_config(char* recvBuf, cell_config_t* cell_config, int buf_idx, int recv
 }
 
 void print_ue_dci(ue_dci_t* q){
-	printf("Cell_idx:%d tti:%d rnti:%d dl_tbs:%d ul_tbs:%d\n", 
-			q->cell_idx, q->tti, q->rnti, q->dl_tbs, q->ul_tbs);
+	printf("Cell_idx:%d tti:%d rnti:%d tbs:%d n_prb:%d\n", 
+			q->cell_idx, q->tti, q->rnti, q->tbs0+q->tbs1, q->prb);
 	return;
 }
+
+
 // We receive DCI from the buffer. The received dci is stored inside the ue_dci
 int recv_dci(char* recvBuf, ue_dci_t* ue_dci, int buf_idx, int recvLen){
 	if(buf_idx + 1 >= recvLen){
-		printf("recv_dci: not enough bytes!\n");
+		printf("DCI reception error1: not enough bytes!\n");
 		return buf_idx;
 	}
 
@@ -60,12 +62,13 @@ int recv_dci(char* recvBuf, ue_dci_t* ue_dci, int buf_idx, int recvLen){
 		case 0:
 			// protocol version 1 ue_dci_t
 			if(buf_idx + (int)sizeof(ue_dci_t) > recvLen){
-				printf("sizeof ue_dci_t:%d buf_idx:%d\n",(int)sizeof(ue_dci_t), buf_idx);
-				printf("recv_one_dci: not enough bytes!\n");
-				return 0;
+				printf("sizeof ue_dci_t:%d buf_idx:%d recvLen:%d\n",(int)sizeof(ue_dci_t), buf_idx, recvLen);
+				printf("DCI reception error2: not enough bytes!\n");
+				buf_idx -= 1;
+				return buf_idx;
 			}
 			memcpy(ue_dci, &recvBuf[buf_idx], sizeof(ue_dci_t)); 
-			print_ue_dci(ue_dci);
+			// print_ue_dci(ue_dci);
 			buf_idx += sizeof(ue_dci_t);
 			break;
 		default:
@@ -85,11 +88,11 @@ int ngscope_dci_sink_recv_buffer(ngscope_dci_sink_CA_t* q, char* recvBuf, int id
 	if( recvBuf[buf_idx] == (char)0xAA && recvBuf[buf_idx+1] == (char)0xAA && \
 		recvBuf[buf_idx+2] == (char)0xAA && recvBuf[buf_idx+3] == (char)0xAA ){
 
-		//printf("DCI received!\n");
+		// printf("DCI received!\n");
 		ue_dci_t ue_dci;
 		buf_idx	+= 4;
 		int buf_idx_before = buf_idx;
-		printf("recvLen:%d buf_idx:%d \n", recvLen, buf_idx);
+		// printf("DCI reception recvLen:%d buf_idx:%d \n", recvLen, buf_idx);
 		buf_idx = recv_dci(recvBuf, &ue_dci, buf_idx, recvLen);
 
 		if(buf_idx_before == buf_idx){
