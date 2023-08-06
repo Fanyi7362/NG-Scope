@@ -8,6 +8,7 @@
         "load_config_remote.h": "c",
         "random": "c",
         "dci_sink_client.h": "c",
-        "dci_sink_sock.h": "c"
+        "dci_sink_sock.h": "c",
+        "strings.h": "c"
     }
 }
