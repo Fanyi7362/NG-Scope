@@ -22,11 +22,11 @@
 #define INIT_STEP_SIZE 90
 #define STEP_SIZE_MIN 22.5
 #define STEP_SIZE_MAX 135
-#define FEEDBACK_WINDOW 20
+#define FEEDBACK_WINDOW 500
 #define N_EXPLORE 4
 #define EXPLORE_STEP_SIZE 22.5
 #define N_STEP_ADJUST_THRESH 10
-#define DATA_RATE_MAX 1200 // bits per ms per RB, (tbso+tbs1 = bits per ms)
+#define DATA_RATE_MAX 2100 // bits per ms per RB, (tbso+tbs1 = bits per ms)
 #define N_STEP_ADJUST_MAX 20
 
 
